@@ -4,6 +4,7 @@
 import fs = require("fs");
 
 interface BuildRequest {
+    id : string,
     repo : string;
     commit : string;
     pingURL : string;
@@ -42,7 +43,7 @@ var buildStarted = false;
 
 var app = createServer();
 
-var server = app.listen(80, function () {
+var server = app.listen(65234, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('http server listening at http://%s:%s', host, port);
@@ -121,7 +122,7 @@ function finishBuild() : void {
     let args = {
             headers: {
                 'content-type' : 'application/json'},
-                'url': buildRequest.pingURL,
+                'url': buildRequest.pingURL + "?id=" + buildRequest.id,
                 'body': JSON.stringify(buildResult)
             };
 
@@ -129,7 +130,7 @@ function finishBuild() : void {
         if (!error && response.statusCode == 200) {
             appendLog('build finished notification success');
         } else {
-            appendLog('build finished notification error: ' + error);
+            appendLog('build finished notification error: ' + error ? error : JSON.stringify(response));
         }
         process.exit(buildResult.succeeded ? 0 : 1);
     });
@@ -145,10 +146,10 @@ function appendLog(text : string) {
 
 
 // TESTING SERVER
+// curl -X POST -H "Content-Type: application/json" -d '{"id":"myBuildId","repo":"mserranom/lean-ci","commit":"","pingURL":"http://localhost:65234/end"}' http://localhost:65234/start
 //app.post('/end', (req, res) => {
-//    console.log('received /build/end POST request');
+//    console.log('build ' + req.query.id + ' success!!');
 //    res.end();
-//    console.log(req.body);
 //});
 
 
