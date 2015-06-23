@@ -43,7 +43,7 @@ var buildStarted = false;
 
 var app = createServer();
 
-var server = app.listen(65234, function () {
+var server = app.listen(64321, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('http server listening at http://%s:%s', host, port);
