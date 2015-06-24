@@ -3,21 +3,22 @@
 
 import fs = require("fs");
 
-interface BuildRequest {
+// for the time being this interfaces/classes are copy-pasted from model.ts in lean-ci repo
+
+export interface BuildRequest {
     id : string,
     repo : string;
     commit : string;
     pingURL : string;
 }
 
-interface BuildConfig {
+export interface BuildConfig {
     command : string;
     dependencies : Array<string>;
 }
 
-class BuildResult {
-    repo : string;
-    commit : string;
+export class BuildResult {
+    request : BuildRequest;
     succeeded : boolean;
     buildConfig : BuildConfig;
     log : string = '';
@@ -68,8 +69,7 @@ var shell = require('shelljs');
 
 function start() {
 
-    buildResult.repo = buildRequest.repo;
-    buildResult.commit = buildRequest.commit;
+    buildResult.request = buildRequest;
 
     let checkoutSuccess = checkoutProject(buildRequest.repo, buildRequest.commit);
     if(checkoutSuccess) {
@@ -100,8 +100,8 @@ function checkoutProject(repo : string, commit : string) : boolean {
     appendLog('build configuration read: ' + buildConf);
 
     if(!commit) {
-        buildResult.commit = shell.exec('git log -1 --stat').output.split("\n")[0].split(" ")[1].trim();
-        appendLog('commit not provided, running in last commit: ' + buildResult.commit);
+        buildResult.request.commit = shell.exec('git log -1 --stat').output.split("\n")[0].split(" ")[1].trim();
+        appendLog('commit not provided, running in last commit: ' + buildResult.request.commit);
     }
 
     return true;
