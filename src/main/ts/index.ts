@@ -91,6 +91,12 @@ function checkoutProject(repo : string, commit : string) : boolean {
         return false;
     }
 
+    if(commit) {
+        let checkout = 'git checkout ' + commit;
+        appendLog(checkout);
+        shell.exec(checkout);
+    }
+
     let cdCmd = 'cd ' + repo.split('/')[1];
     shell.exec(cdCmd);
     appendLog(cdCmd);
