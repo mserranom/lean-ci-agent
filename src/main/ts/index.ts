@@ -132,6 +132,7 @@ function finishBuild() : void {
         } else {
             appendLog('build finished notification error: ' + error ? error : JSON.stringify(response));
         }
+        appendLog('build status: ' + buildResult.succeeded ? 'SUCCESS' : 'FAILED');
         process.exit(buildResult.succeeded ? 0 : 1);
     });
 }
