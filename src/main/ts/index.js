@@ -17,11 +17,11 @@ service.startListening();
 service.onBuildRequest(function (req, res) {
     appendLog('received /build/start POST request');
     res.end();
-    if (buildStarted) {
-        console.warn('build already started');
-        return;
-    }
-    buildStarted = true;
+    //if(buildStarted) {
+    //    console.warn('build already started');
+    //    return;
+    //}
+    //buildStarted = true;
     appendLog('build request received: ' + JSON.stringify(req.body));
     buildResult.request = req.body;
     checkoutProject();
@@ -69,14 +69,14 @@ function exit() {
     appendLog('build status: ' + (buildResult.succeeded ? 'SUCCESS' : 'FAILED'));
     fs.writeFileSync('log.txt', buildResult.log, 'utf8');
     console.log(buildResult.log);
-    process.exit(buildResult.succeeded ? 0 : 1);
+    //process.exit(buildResult.succeeded ? 0 : 1);
 }
 function appendLog(text) {
     buildResult.log += text + '\n';
 }
 //TESTING SERVER
 //curl -X POST -H "Content-Type: application/json" -d '{"id":"myBuildId","repo":"mserranom/lean-ci-testA","commit":"","pingURL":"http://localhost:64321/end"}' http://localhost:64321/start
-service.getApp().post('/end', function (req, res) {
-    appendLog('buildFinish "' + req.query.id + '" was pinged successfully!!');
-    res.end();
-});
+//service.getApp().post('/end', (req, res) => {
+//    appendLog('buildFinish "' + req.query.id + '" was pinged successfully!!');
+//    res.end();
+//});
