@@ -1,115 +1,82 @@
 ///<reference path="../../../lib/node-0.10.d.ts"/>
-
-import fs = require("fs");
-
-import {BuildResult, BuildRequest, BuildConfig} from './DataTypes';
-import {BuildService} from './BuildService';
-import {GitRepo} from './GitRepo';
-
-class BuildResultImpl implements BuildResult {
-    request : BuildRequest;
-    succeeded : boolean = true;
-    buildConfig : BuildConfig;
-    log : string = '';
-}
-
+var fs = require("fs");
+var BuildService_1 = require('./BuildService');
+var GitRepo_1 = require('./GitRepo');
+var BuildResultImpl = (function () {
+    function BuildResultImpl() {
+        this.succeeded = true;
+        this.log = '';
+    }
+    return BuildResultImpl;
+})();
 var buildStarted = false;
-
 var buildResult = new BuildResultImpl();
-
-var service = new BuildService(appendLog);
-
-var repo : GitRepo;
-
+var service = new BuildService_1.BuildService(appendLog);
+var repo;
 service.startListening();
-
-service.onBuildRequest((req, res) => {
+service.onBuildRequest(function (req, res) {
     appendLog('received /build/start POST request');
     res.end();
-
-    if(buildStarted) {
+    if (buildStarted) {
         console.warn('build already started');
         return;
     }
     buildStarted = true;
-
     appendLog('build request received: ' + JSON.stringify(req.body));
     buildResult.request = req.body;
-
     checkoutProject();
     startBuild();
     finishBuild();
 });
-
 function checkoutProject() {
-
-    repo = new GitRepo(buildResult.request.repo, appendLog);
-
-    if(!repo.clone())
-    {
+    repo = new GitRepo_1.GitRepo(buildResult.request.repo, appendLog);
+    if (!repo.clone()) {
         buildResult.succeeded = false;
         appendLog('FAILURE: ' + buildResult.succeeded);
         exit();
     }
-
-    if(buildResult.request.commit) {
-       if(!repo.checkout(buildResult.request.commit)) {
-           appendLog('error on commit checkout');
-           buildResult.succeeded = false;
-           exit();
-       }
+    if (buildResult.request.commit) {
+        if (!repo.checkout(buildResult.request.commit)) {
+            appendLog('error on commit checkout');
+            buildResult.succeeded = false;
+            exit();
+        }
     }
-
-    let buildConf = repo.getFileContent('ci.json');
+    var buildConf = repo.getFileContent('ci.json');
     buildResult.buildConfig = JSON.parse(buildConf);
     appendLog('build configuration read: ' + buildConf);
-
-    let shell = require('shelljs');
-    if(!buildResult.request.commit) {
+    var shell = require('shelljs');
+    if (!buildResult.request.commit) {
         buildResult.request.commit = repo.getCommit();
         appendLog('commit not provided, running in last commit: ' + buildResult.request.commit);
     }
 }
-
-function startBuild()  {
-
+function startBuild() {
     appendLog('starting build process: ' + buildResult.buildConfig.command);
-    let res = repo.exec(buildResult.buildConfig.command);
-
+    var res = repo.exec(buildResult.buildConfig.command);
     appendLog(res.output);
-    if(res.code != 0) {
-
+    if (res.code != 0) {
         buildResult.succeeded = false;
         appendLog('build failed with error code: ' + res.code);
         exit();
     }
 }
-
-function finishBuild() : void {
+function finishBuild() {
     appendLog('notifying build finished');
     service.pingFinish(buildResult, exit);
 }
-
 function exit() {
     appendLog('build status: ' + (buildResult.succeeded ? 'SUCCESS' : 'FAILED'));
     fs.writeFileSync('log.txt', buildResult.log, 'utf8');
     console.log(buildResult.log);
     process.exit(buildResult.succeeded ? 0 : 1);
 }
-
-
-function appendLog(text : string) {
+function appendLog(text) {
     buildResult.log += text + '\n';
 }
-
- //TESTING SERVER
- //curl -X POST -H "Content-Type: application/json" -d '{"id":"myBuildId","repo":"mserranom/lean-ci-testA","commit":"","pingURL":"http://localhost:64321/end"}' http://localhost:64321/start
-//service.getApp().post('/end', (req, res) => {
-//    appendLog('buildFinish "' + req.query.id + '" was pinged successfully!!');
-//    res.end();
-//});
-
-
-
-
-
+//TESTING SERVER
+//curl -X POST -H "Content-Type: application/json" -d '{"id":"myBuildId","repo":"mserranom/lean-ci-testA","commit":"","pingURL":"http://localhost:64321/end"}' http://localhost:64321/start
+service.getApp().post('/end', function (req, res) {
+    appendLog('buildFinish "' + req.query.id + '" was pinged successfully!!');
+    res.end();
+});

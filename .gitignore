@@ -33,5 +33,4 @@ _SpecRunner.html
 *.ipr
 *.iws
 
-src/main/ts/*.js
 src/test/ts/*.js
