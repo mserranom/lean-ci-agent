@@ -1,8 +1,12 @@
+
 export interface BuildRequest {
     id : string,
+    user : string;
     repo : string;
     commit : string;
     pingURL : string;
+    requestTimestamp : Date;
+    processedTimestamp : Date;
 }
 
 export interface BuildConfig {
@@ -15,4 +19,6 @@ export interface BuildResult {
     succeeded : boolean;
     buildConfig : BuildConfig;
     log : string;
+    startedTimestamp : Date;
+    finishedTimestamp : Date;
 }

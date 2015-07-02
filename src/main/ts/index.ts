@@ -7,6 +7,8 @@ import {BuildService} from './BuildService';
 import {GitRepo} from './GitRepo';
 
 class BuildResultImpl implements BuildResult {
+    startedTimestamp:Date;
+    finishedTimestamp:Date;
     request : BuildRequest;
     succeeded : boolean = true;
     buildConfig : BuildConfig;
@@ -34,6 +36,7 @@ service.onBuildRequest((req, res) => {
     buildStarted = true;
 
     appendLog('build request received: ' + JSON.stringify(req.body));
+    buildResult.startedTimestamp = new Date();
     buildResult.request = req.body;
 
     checkoutProject();
@@ -87,6 +90,7 @@ function startBuild()  {
 
 function finishBuild() : void {
     appendLog('notifying build finished');
+    buildResult.finishedTimestamp = new Date();
     service.pingFinish(buildResult, exit);
 }
 
