@@ -41,6 +41,7 @@ service.onBuildRequest((req, res) => {
 
     checkoutProject();
     startBuild();
+    deployArtifacts();
     finishBuild();
 });
 
@@ -67,7 +68,6 @@ function checkoutProject() {
     buildResult.buildConfig = JSON.parse(buildConf);
     appendLog('build configuration read: ' + buildConf);
 
-    let shell = require('shelljs');
     if(!buildResult.request.commit) {
         buildResult.request.commit = repo.getCommit();
         appendLog('commit not provided, running in last commit: ' + buildResult.request.commit);
@@ -86,6 +86,29 @@ function startBuild()  {
         appendLog('build failed with error code: ' + res.code);
         exit();
     }
+}
+
+function deployArtifacts() {
+    if(!buildResult.buildConfig.package) {
+        appendLog('no deployable packages defined');
+        return;
+    }
+    let file = buildResult.buildConfig.package;
+
+    let names = buildResult.request.repo.split('/');
+    let groupId = names[0];
+    let artifactId = names[1];
+    let packaging = file.indexOf('.') < 0 ? 'file' : file.slice(file.indexOf('.'));
+
+    let version = buildResult.request.commit;
+
+    let cmd = 'mvn deploy:deploy-file'
+        + '--settings ../maven-settings.xml '
+        + ' -DgroupId=' + groupId
+        + ' -DartifactId=' + artifactId
+        + ' -Dpackaging=' + packaging
+        + ' -Dversion=' + version;
+    repo.exec(cmd);
 }
 
 function finishBuild() : void {
