@@ -12,6 +12,7 @@ export interface BuildRequest {
 export interface BuildConfig {
     command : string;
     dependencies : Array<string>;
+    package : string;
 }
 
 export interface BuildResult {
