@@ -4,7 +4,7 @@
 
 import {expect} from 'chai';
 
-describe('BuildQueue', () => {
+describe('TestDefault', () => {
 
     it('test',() => {
         expect(true).to.be.true;

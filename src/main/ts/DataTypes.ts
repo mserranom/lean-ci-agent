@@ -10,7 +10,7 @@ export interface BuildRequest {
 }
 
 export interface BuildConfig {
-    command : string;
+    build : Array<string>;
     dependencies : Array<string>;
     package : string;
 }

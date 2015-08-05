@@ -41,7 +41,6 @@ service.onBuildRequest((req, res) => {
 
     checkoutProject();
     startBuild();
-    deployArtifacts();
     finishBuild();
 });
 
@@ -75,40 +74,18 @@ function checkoutProject() {
 }
 
 function startBuild()  {
+    buildResult.buildConfig.build.forEach(buildCmd => executeCommand(buildCmd));
+}
 
-    appendLog('starting build process: ' + buildResult.buildConfig.command);
-    let res = repo.exec(buildResult.buildConfig.command);
-
+function executeCommand(command : string) {
+    appendLog('$ ' + command);
+    let res = repo.exec(command);
     appendLog(res.output);
-    if(res.code != 0) {
-
+    if(res.code !== 0) {
         buildResult.succeeded = false;
         appendLog('build failed with error code: ' + res.code);
         exit();
     }
-}
-
-function deployArtifacts() {
-    if(!buildResult.buildConfig.package) {
-        appendLog('no deployable packages defined');
-        return;
-    }
-    let file = buildResult.buildConfig.package;
-
-    let names = buildResult.request.repo.split('/');
-    let groupId = names[0];
-    let artifactId = names[1];
-    let packaging = file.indexOf('.') < 0 ? 'file' : file.slice(file.indexOf('.'));
-
-    let version = buildResult.request.commit;
-
-    let cmd = 'mvn deploy:deploy-file'
-        + '--settings ../maven-settings.xml '
-        + ' -DgroupId=' + groupId
-        + ' -DartifactId=' + artifactId
-        + ' -Dpackaging=' + packaging
-        + ' -Dversion=' + version;
-    repo.exec(cmd);
 }
 
 function finishBuild() : void {
@@ -123,7 +100,6 @@ function exit() {
     console.log(buildResult.log);
     process.exit(buildResult.succeeded ? 0 : 1);
 }
-
 
 function appendLog(text : string) {
     buildResult.log += text + '\n';
