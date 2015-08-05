@@ -27,7 +27,7 @@ service.onBuildRequest(function (req, res) {
     buildResult.request = req.body;
     checkoutProject();
     startBuild();
-    finishBuild();
+    exit();
 });
 function checkoutProject() {
     repo = new GitRepo_1.GitRepo(buildResult.request.repo, appendLog);
@@ -64,12 +64,10 @@ function executeCommand(command) {
         exit();
     }
 }
-function finishBuild() {
+function exit() {
     appendLog('notifying build finished');
     buildResult.finishedTimestamp = new Date();
     service.pingFinish(buildResult, exit);
-}
-function exit() {
     appendLog('build status: ' + (buildResult.succeeded ? 'SUCCESS' : 'FAILED'));
     fs.writeFileSync('log.txt', buildResult.log, 'utf8');
     console.log(buildResult.log);
