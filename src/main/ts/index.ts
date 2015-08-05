@@ -41,7 +41,7 @@ service.onBuildRequest((req, res) => {
 
     checkoutProject();
     startBuild();
-    finishBuild();
+    exit();
 });
 
 function checkoutProject() {
@@ -88,13 +88,11 @@ function executeCommand(command : string) {
     }
 }
 
-function finishBuild() : void {
+function exit() {
     appendLog('notifying build finished');
     buildResult.finishedTimestamp = new Date();
     service.pingFinish(buildResult, exit);
-}
 
-function exit() {
     appendLog('build status: ' + (buildResult.succeeded ? 'SUCCESS' : 'FAILED'));
     fs.writeFileSync('log.txt', buildResult.log, 'utf8');
     console.log(buildResult.log);
