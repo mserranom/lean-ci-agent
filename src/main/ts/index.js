@@ -75,7 +75,7 @@ function exit() {
     appendLog('build status: ' + (buildResult.succeeded ? 'SUCCESS' : 'FAILED'));
     fs.writeFileSync('log.txt', buildResult.log, 'utf8');
     console.log(buildResult.log);
-    service.pingFinish(buildResult, function () { return process.exit(buildResult.succeeded ? 0 : 1); });
+    service.pingFinish(buildResult, function () { return console.log('pinged'); });
 }
 function appendLog(text) {
     buildResult.log += text + '\n';
