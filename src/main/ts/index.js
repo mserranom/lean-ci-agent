@@ -25,22 +25,26 @@ service.onBuildRequest(function (req, res) {
     appendLog('build request received: ' + JSON.stringify(req.body));
     buildResult.startedTimestamp = new Date();
     buildResult.request = req.body;
-    checkoutProject();
-    startBuild();
-    exit();
+    var checkoutSucceeded = checkoutProject();
+    if (checkoutSucceeded) {
+        startBuild();
+        exit();
+    }
 });
 function checkoutProject() {
     repo = new GitRepo_1.GitRepo(buildResult.request.repo, appendLog);
     if (!repo.clone()) {
         buildResult.succeeded = false;
-        appendLog('FAILURE: ' + buildResult.succeeded);
+        appendLog('Build succeeded=' + buildResult.succeeded);
         exit();
+        return false;
     }
     if (buildResult.request.commit) {
         if (!repo.checkout(buildResult.request.commit)) {
             appendLog('error on commit checkout');
             buildResult.succeeded = false;
             exit();
+            return false;
         }
     }
     var buildConf = repo.getFileContent('ci.json');
@@ -50,6 +54,7 @@ function checkoutProject() {
         buildResult.request.commit = repo.getCommit();
         appendLog('commit not provided, running in last commit: ' + buildResult.request.commit);
     }
+    return true;
 }
 function startBuild() {
     buildResult.buildConfig.build.forEach(function (buildCmd) { return executeCommand(buildCmd); });
@@ -67,11 +72,10 @@ function executeCommand(command) {
 function exit() {
     appendLog('notifying build finished');
     buildResult.finishedTimestamp = new Date();
-    service.pingFinish(buildResult, exit);
     appendLog('build status: ' + (buildResult.succeeded ? 'SUCCESS' : 'FAILED'));
     fs.writeFileSync('log.txt', buildResult.log, 'utf8');
     console.log(buildResult.log);
-    process.exit(buildResult.succeeded ? 0 : 1);
+    service.pingFinish(buildResult, function () { return process.exit(buildResult.succeeded ? 0 : 1); });
 }
 function appendLog(text) {
     buildResult.log += text + '\n';
