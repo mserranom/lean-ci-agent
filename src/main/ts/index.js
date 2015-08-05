@@ -27,23 +27,21 @@ service.onBuildRequest(function (req, res) {
     buildResult.request = req.body;
     var checkoutSucceeded = checkoutProject();
     if (checkoutSucceeded) {
-        startBuild();
-        exit();
+        build();
     }
+    exit();
 });
 function checkoutProject() {
     repo = new GitRepo_1.GitRepo(buildResult.request.repo, appendLog);
     if (!repo.clone()) {
         buildResult.succeeded = false;
         appendLog('Build succeeded=' + buildResult.succeeded);
-        exit();
         return false;
     }
     if (buildResult.request.commit) {
         if (!repo.checkout(buildResult.request.commit)) {
             appendLog('error on commit checkout');
             buildResult.succeeded = false;
-            exit();
             return false;
         }
     }
@@ -56,8 +54,14 @@ function checkoutProject() {
     }
     return true;
 }
-function startBuild() {
-    buildResult.buildConfig.build.forEach(function (buildCmd) { return executeCommand(buildCmd); });
+function build() {
+    for (var i = 0; i < buildResult.buildConfig.build.length; i++) {
+        var succeeded = executeCommand(buildResult.buildConfig.build[i]);
+        if (!succeeded) {
+            return false;
+        }
+    }
+    return true;
 }
 function executeCommand(command) {
     appendLog('$ ' + command);
@@ -66,7 +70,10 @@ function executeCommand(command) {
     if (res.code !== 0) {
         buildResult.succeeded = false;
         appendLog('build failed with error code: ' + res.code);
-        exit();
+        return false;
+    }
+    else {
+        return true;
     }
 }
 function exit() {
@@ -75,7 +82,7 @@ function exit() {
     appendLog('build status: ' + (buildResult.succeeded ? 'SUCCESS' : 'FAILED'));
     fs.writeFileSync('log.txt', buildResult.log, 'utf8');
     console.log(buildResult.log);
-    service.pingFinish(buildResult, function () { return console.log('pinged'); });
+    service.pingFinish(buildResult, function () { return process.exit(); });
 }
 function appendLog(text) {
     buildResult.log += text + '\n';

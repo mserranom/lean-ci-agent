@@ -40,10 +40,11 @@ service.onBuildRequest((req, res) => {
     buildResult.request = req.body;
 
     let checkoutSucceeded = checkoutProject();
+
     if(checkoutSucceeded) {
-        startBuild();
-        exit();
+        build();
     }
+    exit();
 });
 
 function checkoutProject() : boolean {
@@ -54,7 +55,6 @@ function checkoutProject() : boolean {
     {
         buildResult.succeeded = false;
         appendLog('Build succeeded=' + buildResult.succeeded);
-        exit();
         return false;
     }
 
@@ -62,7 +62,6 @@ function checkoutProject() : boolean {
        if(!repo.checkout(buildResult.request.commit)) {
            appendLog('error on commit checkout');
            buildResult.succeeded = false;
-           exit();
            return false;
        }
     }
@@ -79,18 +78,28 @@ function checkoutProject() : boolean {
     return true;
 }
 
-function startBuild()  {
-    buildResult.buildConfig.build.forEach(buildCmd => executeCommand(buildCmd));
+function build()  {
+
+    for(var i = 0; i < buildResult.buildConfig.build.length; i++) {
+        let succeeded = executeCommand(buildResult.buildConfig.build[i]);
+        if(!succeeded) {
+            return false;
+        }
+    }
+    return true;
+
 }
 
-function executeCommand(command : string) {
+function executeCommand(command : string) : boolean {
     appendLog('$ ' + command);
     let res = repo.exec(command);
     appendLog(res.output);
     if(res.code !== 0) {
         buildResult.succeeded = false;
         appendLog('build failed with error code: ' + res.code);
-        exit();
+        return false;
+    } else {
+        return true;
     }
 }
 
@@ -100,7 +109,7 @@ function exit() {
     appendLog('build status: ' + (buildResult.succeeded ? 'SUCCESS' : 'FAILED'));
     fs.writeFileSync('log.txt', buildResult.log, 'utf8');
     console.log(buildResult.log);
-    service.pingFinish(buildResult, () => console.log('pinged'));
+    service.pingFinish(buildResult, () => process.exit());
 }
 
 function appendLog(text : string) {
