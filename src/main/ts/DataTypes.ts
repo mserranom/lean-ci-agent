@@ -15,11 +15,19 @@ export interface BuildConfig {
     package : string;
 }
 
-export interface BuildResult {
+export class BuildResult {
     request : BuildRequest;
     succeeded : boolean;
     buildConfig : BuildConfig;
-    log : string;
+    log : string = '';
     startedTimestamp : Date;
     finishedTimestamp : Date;
+}
+
+export class Status {
+    static CHECKING_OUT : string = 'checking out';
+    static BUILDING : string = 'building';
+    static SUCCEEDED : string = 'succeeded';
+    static FAILED : string = 'failed';
+    static NOT_STARTED : string = 'not started';
 }

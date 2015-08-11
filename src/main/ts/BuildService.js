@@ -1,11 +1,7 @@
 ///<reference path="DataTypes.ts"/>
 var BuildService = (function () {
-    function BuildService(logger) {
-        this._logger = logger;
+    function BuildService() {
     }
-    BuildService.prototype.getApp = function () {
-        return this._app;
-    };
     BuildService.prototype.startListening = function () {
         if (this._app) {
             return;
@@ -27,8 +23,13 @@ var BuildService = (function () {
     BuildService.prototype.onBuildRequest = function (func) {
         this._app.post('/start', function (req, res) { return func(req, res); });
     };
+    BuildService.prototype.onStatusRequest = function (func) {
+        this._app.get('/status', function (req, res) { return func(req, res); });
+    };
+    BuildService.prototype.onLogRequest = function (func) {
+        this._app.get('/log', function (req, res) { return func(req, res); });
+    };
     BuildService.prototype.pingFinish = function (result, onFinish) {
-        var _this = this;
         var request = require('request');
         var args = {
             headers: {
@@ -38,10 +39,10 @@ var BuildService = (function () {
         };
         request.post(args, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                _this._logger('build finished notification success');
+                console.log('build finished notification success');
             }
             else {
-                _this._logger('build finished notification error: ' + error ? error : JSON.stringify(response));
+                console.log('build finished notification error: ' + (error ? error : JSON.stringify(response)));
             }
             onFinish();
         });

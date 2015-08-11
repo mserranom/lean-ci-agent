@@ -1,40 +1,69 @@
+///<reference path="../../../lib/Q.d.ts"/>
+var Q = require('Q');
 var GitRepo = (function () {
     function GitRepo(repo, logger) {
         this._repo = repo;
         this._logger = logger;
     }
-    GitRepo.prototype.clone = function () {
+    GitRepo.prototype.cloneAsync = function () {
+        var _this = this;
+        var defer = Q.defer();
         var shell = require('shelljs');
         var clone = 'git clone https://github.com/' + this._repo + '.git';
         this.appendLog(clone);
-        var result = shell.exec(clone, { silent: true });
-        this.appendLog(result.output);
-        if (result.code != 0) {
-            this.appendLog('git clone failed');
-            return false;
-        }
-        var repoName = this._repo.split('/')[1];
-        this._repoPwd = shell.pwd() + '/' + repoName;
-        return true;
+        shell.exec(clone, { silent: true, async: true }, function (code, output) {
+            if (code !== 0) {
+                defer.reject('git clone failed');
+            }
+            else {
+                _this.appendLog(output);
+                var repoName = _this._repo.split('/')[1];
+                _this._repoPwd = shell.pwd() + '/' + repoName;
+                defer.resolve();
+            }
+        });
+        return defer.promise;
     };
-    GitRepo.prototype.checkout = function (commit) {
+    GitRepo.prototype.checkoutAsync = function (commit) {
+        var _this = this;
+        var defer = Q.defer();
+        if (!commit) {
+            defer.resolve();
+            return;
+        }
         var shell = require('shelljs');
         this.moveRepoPwd();
         var checkout = 'git checkout' + commit;
         this.appendLog(checkout);
-        var result = shell.exec(checkout, { silent: true });
-        this.appendLog(result.output);
-        this.restorePwd();
-        return result.code == 0;
+        shell.exec(checkout, { silent: true, async: true }, function (code, output) {
+            if (code !== 0) {
+                defer.reject('git clone failed');
+            }
+            else {
+                _this.appendLog(output);
+                _this.restorePwd();
+                defer.resolve();
+            }
+        });
+        return defer.promise;
     };
-    GitRepo.prototype.exec = function (command) {
+    GitRepo.prototype.execAsync = function (command) {
+        var _this = this;
         var shell = require('shelljs');
+        var defer = Q.defer();
         this.moveRepoPwd();
         this.appendLog('executing ' + command);
-        var result = shell.exec(command, { silent: true });
-        this.appendLog('execution result code: ' + result.code);
-        this.restorePwd();
-        return result;
+        shell.exec(command, { silent: true, async: true }, function (code, output) {
+            if (code !== 0) {
+                defer.reject(command + ' returned with exit code=' + code);
+            }
+            else {
+                console.log('RESTORRED');
+                _this.restorePwd();
+                defer.resolve(output);
+            }
+        });
+        return defer.promise;
     };
     GitRepo.prototype.getFileContent = function (fileName) {
         this.moveRepoPwd();

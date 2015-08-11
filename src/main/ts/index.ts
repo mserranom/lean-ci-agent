@@ -1,123 +1,169 @@
 ///<reference path="../../../lib/node-0.10.d.ts"/>
+///<reference path="../../../lib/Q.d.ts"/>
 
-import fs = require("fs");
+import fs = require('fs');
+var Q = require('Q');
 
-import {BuildResult, BuildRequest, BuildConfig} from './DataTypes';
+import {Status, BuildResult, BuildRequest, BuildConfig} from './DataTypes';
 import {BuildService} from './BuildService';
 import {GitRepo} from './GitRepo';
 
-class BuildResultImpl implements BuildResult {
-    startedTimestamp:Date;
-    finishedTimestamp:Date;
-    request : BuildRequest;
-    succeeded : boolean = true;
-    buildConfig : BuildConfig;
-    log : string = '';
-}
+var buildStatus : string = Status.NOT_STARTED;
+var buildResult = new BuildResult();
 
-var buildStarted = false;
-
-var buildResult = new BuildResultImpl();
-
-var service = new BuildService(appendLog);
-
+var service = new BuildService();
 var repo : GitRepo;
 
 service.startListening();
 
-service.onBuildRequest((req, res) => {
-    appendLog('received /build/start POST request');
-    res.end();
-
-    if(buildStarted) {
-        console.warn('build already started');
-        return;
-    }
-    buildStarted = true;
-
-    appendLog('build request received: ' + JSON.stringify(req.body));
-    buildResult.startedTimestamp = new Date();
-    buildResult.request = req.body;
-
-    let checkoutSucceeded = checkoutProject();
-
-    if(checkoutSucceeded) {
-        build();
-    }
-    exit();
+service.onStatusRequest((req, res) => {
+    console.log('received STATUS request');
+    res.send(buildStatus);
 });
 
-function checkoutProject() : boolean {
 
+service.onLogRequest((req, res) => {
+    console.log('received LOG request');
+    if (buildStatus === Status.FAILED || buildStatus === Status.SUCCEEDED) {
+        res.send(buildResult.log);
+        console.log('sent LOG chunk');
+    } else if(buildStatus === Status.NOT_STARTED) {
+        res.send('not started')
+    } else {
+
+        var intervalId;
+
+        let currentLogLenght = 0;
+
+        let writeChunk = () => {
+            console.log('writing http chunk');
+            if(currentLogLenght < buildResult.log.length) {
+                res.write(buildResult.log.slice(currentLogLenght));
+                currentLogLenght = buildResult.log.length;
+            } else if(buildStatus === Status.FAILED || buildStatus === Status.SUCCEEDED) {
+                if(intervalId) {
+                    clearInterval(intervalId);
+                }
+                res.end();
+            }
+        };
+
+        intervalId = setInterval(writeChunk, 2000);
+    }
+});
+
+service.onBuildRequest((req, res) => {
+    if(buildStatus !== Status.NOT_STARTED) {
+        console.warn('build already started');
+    } else{
+        start(req.body)
+    }
+    res.end();
+});
+
+function start(req : BuildRequest) {
+    appendLog('build request received: ' + JSON.stringify(req));
+    buildResult.startedTimestamp = new Date();
+    buildResult.request = req;
+
+    doBuild();
+}
+
+function doBuild() {
+    checkoutProjectAsync()
+        .then(() => { return buildAsync() })
+        .then(() => {
+            buildStatus = Status.SUCCEEDED;
+        })
+        .fail((reason) => {
+            buildStatus = Status.FAILED;
+            appendLog(reason);
+        })
+        .fin(() => {
+            finish();
+        })
+}
+
+function checkoutProjectAsync() : Q.IPromise<void> {
+    let defer : Q.Deferred<void> = Q.defer();
+    buildStatus = Status.CHECKING_OUT;
     repo = new GitRepo(buildResult.request.repo, appendLog);
 
-    if(!repo.clone())
-    {
-        buildResult.succeeded = false;
-        appendLog('Build succeeded=' + buildResult.succeeded);
-        return false;
-    }
+    repo.cloneAsync()
+        .then(() => {return repo.checkoutAsync(buildResult.request.commit);})
+        .then(() => {
+            let buildConf = repo.getFileContent('ci.json');
+            buildResult.buildConfig = JSON.parse(buildConf);
+            appendLog('build configuration read: ' + buildConf);
 
-    if(buildResult.request.commit) {
-       if(!repo.checkout(buildResult.request.commit)) {
-           appendLog('error on commit checkout');
-           buildResult.succeeded = false;
-           return false;
-       }
-    }
+            if(!buildResult.request.commit) {
+                buildResult.request.commit = repo.getCommit();
+                appendLog('commit not provided, running in last commit: ' + buildResult.request.commit);
+            }
+            defer.resolve();
+        })
+        .fail((error) => {
+            defer.reject(error);
+        });
 
-    let buildConf = repo.getFileContent('ci.json');
-    buildResult.buildConfig = JSON.parse(buildConf);
-    appendLog('build configuration read: ' + buildConf);
-
-    if(!buildResult.request.commit) {
-        buildResult.request.commit = repo.getCommit();
-        appendLog('commit not provided, running in last commit: ' + buildResult.request.commit);
-    }
-
-    return true;
+    return defer.promise;
 }
 
-function build()  {
+function buildAsync() : Q.IPromise<void> {
 
-    for(var i = 0; i < buildResult.buildConfig.build.length; i++) {
-        let succeeded = executeCommand(buildResult.buildConfig.build[i]);
-        if(!succeeded) {
-            return false;
-        }
-    }
-    return true;
+    buildStatus = Status.BUILDING;
 
+    //transforms the command strings in an array of executables commands returning promises
+    let commands = buildResult.buildConfig.build.map((command) => {return () => {return executeCommandAsync(command)}});
+
+    //return commands.reduce(Q.when, Q()); // other option to run the sequential promises
+
+    return commands.reduce(function (soFar, f) {
+        return soFar.then(f);
+    }, Q(undefined));
 }
 
-function executeCommand(command : string) : boolean {
+function executeCommandAsync(command : string) : Q.IPromise<void> {
+    let defer : Q.Deferred<void> = Q.defer();
     appendLog('$ ' + command);
-    let res = repo.exec(command);
-    appendLog(res.output);
-    if(res.code !== 0) {
-        buildResult.succeeded = false;
-        appendLog('build failed with error code: ' + res.code);
-        return false;
-    } else {
-        return true;
-    }
+
+    repo.execAsync(command)
+        .then((commandResult : string) => {
+            appendLog(commandResult);
+            defer.resolve();
+        })
+        .fail((reason) => {
+            appendLog(reason);
+            appendLog('build failed');
+            defer.reject(reason);
+        });
+    return defer.promise;
 }
 
-function exit() {
-    appendLog('notifying build finished');
+function finish() {
+
     buildResult.finishedTimestamp = new Date();
-    appendLog('build status: ' + (buildResult.succeeded ? 'SUCCESS' : 'FAILED'));
-    fs.writeFileSync('log.txt', buildResult.log, 'utf8');
+
+    appendLog('build status: ' + buildStatus);
+
+    buildResult.succeeded = (buildStatus === Status.SUCCEEDED);
+
     console.log(buildResult.log);
-    service.pingFinish(buildResult, () => process.exit());
+
+    appendLog('notifying build finished');
+    service.pingFinish(buildResult, () => {
+        appendLog('build finish notification success');
+        fs.writeFileSync('log.txt', buildResult.log, 'utf8');
+    });
 }
 
 function appendLog(text : string) {
     buildResult.log += text + '\n';
+    console.log(text);
 }
 
  //TESTING SERVER
- //curl -X POST -H "Content-Type: application/json" -d '{"id":"myBuildId","repo":"mserranom/lean-ci-testA","commit":"","pingURL":"http://localhost:64321/end"}' http://localhost:64321/start
+ //curl -X POST -H "Content-Type: application/json" -d '{"id":"myBuildId","repo":"mserranom/lean-ci","pingURL":"http://localhost:64321/end"}' http://localhost:64321/start
 //service.getApp().post('/end', (req, res) => {
 //    appendLog('buildFinish "' + req.query.id + '" was pinged successfully!!');
 //    res.end();

@@ -4,17 +4,7 @@ import {BuildResult} from 'DataTypes';
 
 export class BuildService {
 
-    private _logger : (string) => void;
-
     private _app : any;
-
-    constructor(logger : (string) => void) {
-        this._logger = logger;
-    }
-
-    getApp() : any {
-        return this._app;
-    }
 
     startListening() {
         if(this._app) {
@@ -42,6 +32,14 @@ export class BuildService {
         this._app.post('/start', (req, res) => func(req,res));
     }
 
+    onStatusRequest(func : (req, res) => void) {
+        this._app.get('/status', (req, res) => func(req,res));
+    }
+
+    onLogRequest(func : (req, res) => void) {
+        this._app.get('/log', (req, res) => func(req,res));
+    }
+
     pingFinish(result : BuildResult, onFinish: () => void) {
         var request : any = require('request');
         let args = {
@@ -53,9 +51,9 @@ export class BuildService {
 
         request.post(args , (error, response, body) => {
             if (!error && response.statusCode == 200) {
-                this._logger('build finished notification success');
+                console.log('build finished notification success');
             } else {
-                this._logger('build finished notification error: ' + error ? error : JSON.stringify(response));
+                console.log('build finished notification error: ' + (error ? error : JSON.stringify(response)));
             }
             onFinish();
         });

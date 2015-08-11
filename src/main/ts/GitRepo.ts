@@ -1,3 +1,7 @@
+///<reference path="../../../lib/Q.d.ts"/>
+var Q = require('Q');
+
+
 export class GitRepo {
 
     private _repo : string;
@@ -11,28 +15,37 @@ export class GitRepo {
         this._logger = logger;
     }
 
-    clone() : boolean {
+    cloneAsync() : Q.IPromise<void> {
+
+        let defer : Q.Deferred<void> = Q.defer();
+
         let shell = require('shelljs');
 
         let clone = 'git clone https://github.com/' + this._repo + '.git';
         this.appendLog(clone);
 
-        let result = shell.exec(clone, {silent:true});
-        this.appendLog(result.output);
+        shell.exec(clone, {silent:true, async: true}, (code : number, output : string) => {
+            if(code !== 0) {
+                defer.reject('git clone failed');
+            } else {
+                this.appendLog(output);
+                let repoName = this._repo.split('/')[1];
+                this._repoPwd = shell.pwd() + '/' + repoName;
+                defer.resolve();
+            }
+        });
 
-        if(result.code != 0)
-        {
-            this.appendLog('git clone failed');
-            return false;
-        }
-
-        let repoName = this._repo.split('/')[1];
-        this._repoPwd = shell.pwd() + '/' + repoName;
-
-        return true;
+        return defer.promise;
     }
 
-    checkout(commit:string) : boolean {
+    checkoutAsync(commit:string) : Q.IPromise<void> {
+        let defer : Q.Deferred<void> = Q.defer();
+
+        if(!commit) {
+            defer.resolve();
+            return;
+        }
+
         let shell = require('shelljs');
 
         this.moveRepoPwd();
@@ -40,22 +53,35 @@ export class GitRepo {
         let checkout = 'git checkout' + commit;
         this.appendLog(checkout);
 
-        let result = shell.exec(checkout, {silent:true});
-        this.appendLog(result.output);
+        shell.exec(checkout, {silent:true, async: true}, (code : number, output : string) => {
+            if(code !== 0) {
+                defer.reject('git clone failed');
+            } else {
+                this.appendLog(output);
+                this.restorePwd();
+                defer.resolve();
+            }
+        });
 
-        this.restorePwd();
-
-        return result.code == 0;
+        return defer.promise;
     }
 
-    exec(command : string) : any {
+    execAsync(command : string) : Q.Promise<string> {
         let shell = require('shelljs');
+        let defer : Q.Deferred<string> = Q.defer();
         this.moveRepoPwd();
         this.appendLog('executing ' + command);
-        let result = shell.exec(command, {silent:true});
-        this.appendLog('execution result code: ' + result.code);
-        this.restorePwd();
-        return result;
+
+        shell.exec(command, {silent:true, async: true}, (code : number, output : string) => {
+            if(code !== 0) {
+                defer.reject(command + ' returned with exit code=' + code);
+            } else {
+                console.log('RESTORRED');
+                this.restorePwd();
+                defer.resolve(output);
+            }
+        });
+        return defer.promise;
     }
 
     getFileContent(fileName : string) : string {
