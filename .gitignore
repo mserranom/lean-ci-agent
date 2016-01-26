@@ -34,3 +34,7 @@ _SpecRunner.html
 *.iws
 
 src/test/ts/*.js
+
+dist
+
+.baseDir.ts
