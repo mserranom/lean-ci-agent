@@ -1,4 +1,6 @@
-FROM jenkins:1.625.3
+# https://hub.docker.com/_/jenkins/
+
+FROM jenkins:1.642.1
 
 USER root
 RUN apt-get update -y && \

@@ -16,6 +16,7 @@
       "dist",
       "lib",
       "out",
-      ".grunt"
+      ".grunt",
+      "jenkins_home"
     ]
 }

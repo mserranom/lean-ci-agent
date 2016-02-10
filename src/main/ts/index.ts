@@ -1,8 +1,13 @@
+///<reference path="../../../typings/tsd.d.ts"/>
+
 "use strict";
 
 import {builds} from './builds';
 import {jenkins} from './jenkins';
 
+//jenkins.startJenkins()
+//    .then(() => console.log('jenkins bootstrap finished!'))
+//    .catch(err => console.log(err));
 
 export const runningBuilds : Map<string, builds.BuildSchema> = new Map();
 

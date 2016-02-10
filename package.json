@@ -2,7 +2,8 @@
   "name": "lean-ci-agent",
   "version": "0.1.0",
   "dependencies": {
-    "jenkins": "0.13.0"
+    "jenkins": "0.13.0",
+    "shelljs": "^0.6.0"
   },
   "devDependencies": {
     "mocha": "2.0.1",
@@ -15,6 +16,9 @@
     "grunt-notify": "^0.4.1",
     "grunt-ts": "5.3.2",
     "simple-mock": "0.5.0"
+  },
+  "scripts": {
+    "test" : "./node_modules/.bin/grunt test"
   },
   "repository": {
     "type": "git",
