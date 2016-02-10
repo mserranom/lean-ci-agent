@@ -1,0 +1,43 @@
+Started by user [8mha:AAAAlh+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+vOD8nVc83PyU1x6OyILUoJzMv2y+/JJUBAhiZGBgqihhk0NSjKDWzXb3RdlLBUSYGJk8GtpzUvPSSDB8G5tKinBIGIZ+sxLJE/ZzEvHT94JKizLx0a6BxUmjGOUNodHsLgAzOEgYu/dLi1CL9vNKcHACFIKlWvwAAAA==[0manonymous
+Building remotely on [8mha:AAAAoR+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+vOD8nVc83PyU1x6OyILUoJzMv2y+/JJUBAhiZGBgqihhk0NSjKDWzXb3RdlLBUSYGJk8GtpzUvPSSDB8G5tKinBIGIZ+sxLJE/ZzEvHT94JKizLx0a6BxUmjGOUNodHsLgAzuEgZR/eT83ILSktQi/Zz85MSc+OKcxLJUAOszakjKAAAA[0mlocal_slave in workspace /Users/miguel/Desktop/JENKINS_SLAVE/workspace/default_job_no_tests
+ > git rev-parse --is-inside-work-tree # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/mserranom/container-ts.git # timeout=10
+Fetching upstream changes from https://github.com/mserranom/container-ts.git
+ > git --version # timeout=10
+ > git -c core.askpass=true fetch --tags --progress https://github.com/mserranom/container-ts.git +refs/heads/*:refs/remotes/origin/*
+ > git rev-parse refs/remotes/origin/master^{commit} # timeout=10
+ > git rev-parse refs/remotes/origin/origin/master^{commit} # timeout=10
+Checking out Revision 230ebbbbeedd61a2f281a911b8e13ebed4039fb7 (refs/remotes/origin/master)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 230ebbbbeedd61a2f281a911b8e13ebed4039fb7
+ > git rev-list 230ebbbbeedd61a2f281a911b8e13ebed4039fb7 # timeout=10
+[default_job_no_tests] $ /bin/sh -xe /var/folders/dh/mj8w07bx4_g0gtjm2vkkc5cc0000gp/T/hudson6106436488181233664.sh
++ docker run ubuntu /bin/echo ''\''Hello' 'world'\'''
+Unable to find image 'ubuntu:latest' locally
+latest: Pulling from library/ubuntu
+8387d9ff0016: Pulling fs layer
+3b52deaaf0ed: Pulling fs layer
+4bd501fad6de: Pulling fs layer
+a3ed95caeb02: Pulling fs layer
+a3ed95caeb02: Waiting
+3b52deaaf0ed: Verifying Checksum
+3b52deaaf0ed: Download complete
+4bd501fad6de: Verifying Checksum
+4bd501fad6de: Download complete
+a3ed95caeb02: Verifying Checksum
+a3ed95caeb02: Download complete
+8387d9ff0016: Verifying Checksum
+8387d9ff0016: Download complete
+8387d9ff0016: Pull complete
+8387d9ff0016: Pull complete
+3b52deaaf0ed: Pull complete
+3b52deaaf0ed: Pull complete
+4bd501fad6de: Pull complete
+4bd501fad6de: Pull complete
+a3ed95caeb02: Pull complete
+a3ed95caeb02: Pull complete
+Digest: sha256:457b05828bdb5dcc044d93d042863fba3f2158ae249a6db5ae3934307c757c54
+Status: Downloaded newer image for ubuntu:latest
+'Hello world'
+Finished: SUCCESS

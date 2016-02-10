@@ -1,0 +1,41 @@
+Started by user [8mha:AAAAlh+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+vOD8nVc83PyU1x6OyILUoJzMv2y+/JJUBAhiZGBgqihhk0NSjKDWzXb3RdlLBUSYGJk8GtpzUvPSSDB8G5tKinBIGIZ+sxLJE/ZzEvHT94JKizLx0a6BxUmjGOUNodHsLgAzOEgYu/dLi1CL9vNKcHACFIKlWvwAAAA==[0manonymous
+Building remotely on [8mha:AAAAoR+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+vOD8nVc83PyU1x6OyILUoJzMv2y+/JJUBAhiZGBgqihhk0NSjKDWzXb3RdlLBUSYGJk8GtpzUvPSSDB8G5tKinBIGIZ+sxLJE/ZzEvHT94JKizLx0a6BxUmjGOUNodHsLgAzuEgZR/eT83ILSktQi/Zz85MSc+OKcxLJUAOszakjKAAAA[0mlocal_slave in workspace /Users/miguel/Desktop/JENKINS_SLAVE/workspace/default_job_no_tests
+Cloning the remote Git repository
+Cloning repository https://github.com/mserranom/container-ts.git
+ > git init /Users/miguel/Desktop/JENKINS_SLAVE/workspace/default_job_no_tests # timeout=10
+Fetching upstream changes from https://github.com/mserranom/container-ts.git
+ > git --version # timeout=10
+ > git -c core.askpass=true fetch --tags --progress https://github.com/mserranom/container-ts.git +refs/heads/*:refs/remotes/origin/*
+ > git config remote.origin.url https://github.com/mserranom/container-ts.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/mserranom/container-ts.git # timeout=10
+Fetching upstream changes from https://github.com/mserranom/container-ts.git
+ > git -c core.askpass=true fetch --tags --progress https://github.com/mserranom/container-ts.git +refs/heads/*:refs/remotes/origin/*
+ > git rev-parse refs/remotes/origin/master^{commit} # timeout=10
+ > git rev-parse refs/remotes/origin/origin/master^{commit} # timeout=10
+Checking out Revision 230ebbbbeedd61a2f281a911b8e13ebed4039fb7 (refs/remotes/origin/master)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 230ebbbbeedd61a2f281a911b8e13ebed4039fb7
+First time build. Skipping changelog.
+[default_job_no_tests] $ /bin/sh -xe /var/folders/dh/mj8w07bx4_g0gtjm2vkkc5cc0000gp/T/hudson5481593195998388051.sh
++ npm install '&&' npm test
+npm ERR! addLocal Could not install /Users/miguel/Desktop/JENKINS_SLAVE/workspace/default_job_no_tests/&&
+npm ERR! Darwin 15.3.0
+npm ERR! argv "/usr/local/Cellar/node/5.5.0/bin/node" "/usr/local/bin/npm" "install" "&&" "npm" "test"
+npm ERR! node v5.5.0
+npm ERR! npm  v3.5.3
+npm ERR! path /Users/miguel/Desktop/JENKINS_SLAVE/workspace/default_job_no_tests/&&
+npm ERR! code ENOENT
+npm ERR! errno -2
+npm ERR! syscall open
+
+npm ERR! enoent ENOENT: no such file or directory, open '/Users/miguel/Desktop/JENKINS_SLAVE/workspace/default_job_no_tests/&&'
+npm ERR! enoent ENOENT: no such file or directory, open '/Users/miguel/Desktop/JENKINS_SLAVE/workspace/default_job_no_tests/&&'
+npm ERR! enoent This is most likely not a problem with npm itself
+npm ERR! enoent and is related to npm not being able to find a file.
+npm ERR! enoent 
+
+npm ERR! Please include the following file with any support request:
+npm ERR!     /Users/miguel/Desktop/JENKINS_SLAVE/workspace/default_job_no_tests/npm-debug.log
+Build step 'Execute shell' marked build as failure
+Finished: FAILURE
